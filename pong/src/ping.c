@@ -134,18 +134,32 @@ void do_setuid(void)
 
 void undo_setuid(void)
 {
-	int status;
+	int status_1;
+	int status_2;
+	int status_3;
 #ifdef _POSIX_SAVED_IDS
-	status = seteuid(ruid);
+	status_1 = seteuid(ruid);
+	status_2 = setegid(ruid);
+	status_3 = setgid(ruid);
 	printf( "Undo set uid successfully.\n");
 #else
 	status = setreuid(euid, ruid);
 	printf("Undo Set uid successfully.\n");
 #endif
-	if (status < 0)
+	if (status_1 < 0)
 	{
 		fprintf(stderr, "Couldn't set uid.\n");
-		exit(status);
+		exit(status_1);
+	}
+		if (status_2 < 0)
+	{
+		fprintf(stderr, "Couldn't set egid.\n");
+		exit(status_2);
+	}
+		if (status_2 < 0)
+	{
+		fprintf(stderr, "Couldn't set gid.\n");
+		exit(status_2);
 	}
 }
 
@@ -314,7 +328,6 @@ int main(int argc, char **argv)
 			memset(&ifr, 0, sizeof(ifr));
 			undo_setuid();
 			strcpy(ifr.ifr_name, device);
-			do_setuid();
 			if (setsockopt(probe_fd, SOL_SOCKET, SO_BINDTODEVICE, device, strlen(device) + 1) == -1)
 			{
 				if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
@@ -337,7 +350,7 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-
+	do_setuid();
 		if (settos &&
 			setsockopt(probe_fd, IPPROTO_IP, IP_TOS, (char *)&settos, sizeof(int)) < 0)
 			perror("Warning: error setting QOS sockopts");

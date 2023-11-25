@@ -712,7 +712,7 @@ restamp:
 		int i;
 		uint8_t *cp, *dp;
 		printf("%d bytes from ", cc);
-		printf(from);
+		printf("%s", from);
 		printf(": icmp_seq=%u", seq);
 
 		if (hops >= 0)
@@ -788,7 +788,7 @@ void finish(void)
 	putchar('\n');
 	fflush(stdout);
 	printf("--- ");
-	printf(hostname);
+	printf("%s",hostname);
 	printf(" statistics ---\n");
 	printf("%ld packets transmitted, ", ntransmitted);
 	printf("%ld received", nreceived);

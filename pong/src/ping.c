@@ -66,6 +66,7 @@ char copyright[] =
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+// #include <net/if.h>
 
 #define MAXIPLEN 60
 #define MAXICMPLEN 76
@@ -148,12 +149,12 @@ void undo_setuid(void)
 		fprintf(stderr, "Couldn't set uid.\n");
 		exit(status_1);
 	}
-		if (status_2 < 0)
+	if (status_2 < 0)
 	{
 		fprintf(stderr, "Couldn't set egid.\n");
 		exit(status_2);
 	}
-		if (status_3 < 0)
+	if (status_3 < 0)
 	{
 		fprintf(stderr, "Couldn't set gid.\n");
 		exit(status_3);
@@ -175,6 +176,20 @@ int main(int argc, char **argv)
 	source.sin_family = AF_INET;
 
 	preload = 1;
+	// if(argc > 10)
+	// {
+	// 	fprintf(stderr, "ping: too many probes\n");
+	// 	return (2);
+	// }
+
+	for (ch = 0; ch < argc; ch++)
+	{
+		if (strlen(argv[ch]) > MAXICMPLEN)
+		{
+			fprintf(stderr, "ping: argument too long\n");
+			return (2);
+		}
+	}
 	while ((ch = getopt(argc, argv, COMMON_OPTSTR "bRT:")) != EOF)
 	{
 		switch (ch)
@@ -295,7 +310,7 @@ int main(int argc, char **argv)
 			if (!hp)
 			{
 				fprintf(stderr, "ping: unknown host ");
-				fprintf(stderr, target);
+				fprintf(stderr, "%s", target);
 				fprintf(stderr, "\n");
 				return (2);
 			}
@@ -324,7 +339,8 @@ int main(int argc, char **argv)
 		{
 			memset(&ifr, 0, sizeof(ifr));
 			undo_setuid();
-			strcpy(ifr.ifr_name, device);
+			strncpy(ifr.ifr_name, device, IFNAMSIZ);
+			ifr.ifr_name[IFNAMSIZ - 1] = '\0';
 			if (setsockopt(probe_fd, SOL_SOCKET, SO_BINDTODEVICE, device, strlen(device) + 1) == -1)
 			{
 				if (IN_MULTICAST(ntohl(dst.sin_addr.s_addr)))
@@ -333,7 +349,7 @@ int main(int argc, char **argv)
 					if (ioctl(probe_fd, SIOCGIFINDEX, &ifr) < 0)
 					{
 						fprintf(stderr, "ping: unknown iface ");
-						fprintf(stderr, device);
+						fprintf(stderr, "%s", device);
 						fprintf(stderr, "\n");
 						return (2);
 					}
@@ -347,7 +363,7 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-	do_setuid();
+		do_setuid();
 		if (settos &&
 			setsockopt(probe_fd, IPPROTO_IP, IP_TOS, (char *)&settos, sizeof(int)) < 0)
 			perror("Warning: error setting QOS sockopts");
@@ -411,7 +427,7 @@ int main(int argc, char **argv)
 		if (ioctl(icmp_sock, SIOCGIFINDEX, &ifr) < 0)
 		{
 			fprintf(stderr, "ping: unknown iface ");
-			fprintf(stderr, device);
+			fprintf(stderr, "%s", device);
 			fprintf(stderr, "\n");
 			return (2);
 		}
@@ -600,7 +616,7 @@ int main(int argc, char **argv)
 	}
 
 	printf("PING ");
-	printf(hostname);
+	printf("%s", hostname);
 	printf("(%s) ", inet_ntoa(whereto.sin_addr));
 	if (device || (options & F_STRICTSOURCE))
 		printf("from %s %s: ", inet_ntoa(source.sin_addr), device ? device : "");
@@ -1307,10 +1323,18 @@ pr_addr(uint32_t addr)
 {
 	struct hostent *hp;
 	static char buf[4096];
-
+	if (strlen((char *)&addr) > MAXIPLEN)
+	{
+		printf("ping: name too long\n");
+		exit(2);
+	}
+	{
+		/* code */
+	}
+	
 	if ((options & F_NUMERIC) ||
 		!(hp = gethostbyaddr((char *)&addr, 4, AF_INET)))
-		sprintf(buf, "%s", inet_ntoa(*(struct in_addr *)&addr));
+		snprintf(buf, sizeof(buf), "%s", inet_ntoa(*(struct in_addr *)&addr));
 	else
 		snprintf(buf, sizeof(buf), "%s (%s)", hp->h_name,
 				 inet_ntoa(*(struct in_addr *)&addr));

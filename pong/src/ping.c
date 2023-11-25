@@ -119,7 +119,6 @@ void do_setuid(void)
 
 #ifdef _POSIX_SAVED_IDS
 	status = setuid(euid);
-	printf( "Set uid successfully.\n");
 #else
 	status = setreuid(ruid, euid);
 #endif
@@ -141,10 +140,8 @@ void undo_setuid(void)
 	status_1 = seteuid(ruid);
 	status_2 = setegid(ruid);
 	status_3 = setgid(ruid);
-	printf( "Undo set uid successfully.\n");
 #else
 	status = setreuid(euid, ruid);
-	printf("Undo Set uid successfully.\n");
 #endif
 	if (status_1 < 0)
 	{
@@ -156,10 +153,10 @@ void undo_setuid(void)
 		fprintf(stderr, "Couldn't set egid.\n");
 		exit(status_2);
 	}
-		if (status_2 < 0)
+		if (status_3 < 0)
 	{
 		fprintf(stderr, "Couldn't set gid.\n");
-		exit(status_2);
+		exit(status_3);
 	}
 }
 

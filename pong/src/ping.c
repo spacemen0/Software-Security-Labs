@@ -166,6 +166,7 @@ int main(int argc, char **argv)
 
 	ruid = getuid();
 	euid = geteuid();
+	undo_setuid();
 	char target[MAXHOSTNAMELEN], hnamebuf[MAXHOSTNAMELEN];
 	struct ifreq ifr;
 	struct hostent *hp;
@@ -328,8 +329,9 @@ int main(int argc, char **argv)
 	{
 		int alen;
 		struct sockaddr_in dst = whereto;
+				do_setuid();
 		int probe_fd = socket(AF_INET, SOCK_DGRAM, 0);
-
+	undo_setuid();
 		if (probe_fd < 0)
 		{
 			perror("socket");
@@ -338,7 +340,6 @@ int main(int argc, char **argv)
 		if (device)
 		{
 			memset(&ifr, 0, sizeof(ifr));
-			undo_setuid();
 			strncpy(ifr.ifr_name, device, IFNAMSIZ);
 			ifr.ifr_name[IFNAMSIZ - 1] = '\0';
 			if (setsockopt(probe_fd, SOL_SOCKET, SO_BINDTODEVICE, device, strlen(device) + 1) == -1)
@@ -363,7 +364,7 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-		do_setuid();
+
 		if (settos &&
 			setsockopt(probe_fd, IPPROTO_IP, IP_TOS, (char *)&settos, sizeof(int)) < 0)
 			perror("Warning: error setting QOS sockopts");
@@ -413,13 +414,13 @@ int main(int argc, char **argv)
 
 	if (whereto.sin_addr.s_addr == 0)
 		whereto.sin_addr.s_addr = source.sin_addr.s_addr;
-
+do_setuid();
 	if ((icmp_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 	{
 		perror("ping: icmp open socket");
 		return (2);
 	}
-
+undo_setuid();
 	if (device)
 	{
 		memset(&ifr, 0, sizeof(ifr));

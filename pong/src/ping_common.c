@@ -643,7 +643,10 @@ void main_loop(int icmp_sock, uint8_t *packet, int packlen)
 	finish();
 }
 
-void safe_strcpy(char *s, char* d) { while ((*d++ = *s++) != 0); }
+void safe_strcpy(char *s, char* d) {
+	strncpy(d, s, strlen(s));
+	d[strlen(s)] = '\0';
+}
 
 int gather_statistics(uint8_t *ptr, int cc, uint16_t seq, int hops,
 		      int csfailed, struct timeval *tv, char *from)

@@ -167,6 +167,7 @@ int main(int argc, char **argv)
 	ruid = getuid();
 	euid = geteuid();
 	undo_setuid();
+	///other codes
 	char target[MAXHOSTNAMELEN], hnamebuf[MAXHOSTNAMELEN];
 	struct ifreq ifr;
 	struct hostent *hp;
